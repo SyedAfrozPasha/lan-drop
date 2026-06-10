@@ -12,7 +12,6 @@
         margin: 0;
         padding: 0;
       }
-
       :root {
         --bg: #0f1117;
         --surface: #1a1d27;
@@ -25,7 +24,6 @@
         --success: #00e676;
         --border: #2e3250;
       }
-
       body {
         font-family: "Segoe UI", system-ui, sans-serif;
         background: var(--bg);
@@ -34,8 +32,6 @@
         display: flex;
         flex-direction: column;
       }
-
-      /* ── Header ── */
       header {
         padding: 18px 32px;
         display: flex;
@@ -75,8 +71,6 @@
         background: var(--success);
         box-shadow: 0 0 6px var(--success);
       }
-
-      /* ── Main layout ── */
       main {
         flex: 1;
         display: grid;
@@ -88,8 +82,6 @@
         padding: 28px 20px;
         align-items: start;
       }
-
-      /* ── Panels ── */
       .panel {
         background: var(--surface);
         border: 1px solid var(--border);
@@ -104,13 +96,6 @@
         text-transform: uppercase;
         color: var(--muted);
         margin-bottom: 16px;
-      }
-
-      /* ── Join form ── */
-      #join-section {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
       }
       label {
         font-size: 0.83rem;
@@ -161,10 +146,9 @@
         color: var(--text);
         border: 1px solid var(--border);
       }
-
-      /* ── Peers list ── */
-      #peers-section {
+      #peers-panel {
         display: none;
+        margin-top: 16px;
       }
       .peer-card {
         display: flex;
@@ -204,7 +188,7 @@
         font-size: 0.88rem;
         font-weight: 600;
       }
-      .peer-id {
+      .peer-status {
         font-size: 0.7rem;
         color: var(--muted);
       }
@@ -214,16 +198,12 @@
         font-size: 0.83rem;
         padding: 20px 0;
       }
-
-      /* ── Right panel ── */
       .right {
         margin-left: 22px;
         display: flex;
         flex-direction: column;
         gap: 20px;
       }
-
-      /* ── Drop zone ── */
       #drop-zone {
         border: 2px dashed var(--border);
         border-radius: 14px;
@@ -288,8 +268,6 @@
         font-size: 0.75rem;
         color: var(--muted);
       }
-
-      /* ── Send button ── */
       #send-btn {
         padding: 12px;
         border-radius: 10px;
@@ -303,21 +281,31 @@
           opacity 0.2s,
           transform 0.1s;
         display: none;
+        width: 100%;
+        margin-top: 10px;
       }
       #send-btn:hover {
         opacity: 0.9;
       }
-      #send-btn:active {
-        transform: scale(0.98);
-      }
       #send-btn:disabled {
-        opacity: 0.5;
+        opacity: 0.4;
         cursor: not-allowed;
       }
-
-      /* ── Progress ── */
-      #progress-area {
+      #cancel-btn {
+        padding: 8px;
+        border-radius: 8px;
+        border: 1px solid var(--danger);
+        cursor: pointer;
+        font-size: 0.82rem;
+        font-weight: 600;
+        background: transparent;
+        color: var(--danger);
+        width: 100%;
+        margin-top: 8px;
         display: none;
+      }
+      .progress-wrap {
+        margin-top: 6px;
       }
       .progress-label {
         display: flex;
@@ -327,7 +315,7 @@
         margin-bottom: 7px;
       }
       .progress-bar-bg {
-        height: 8px;
+        height: 10px;
         border-radius: 99px;
         background: var(--card);
         overflow: hidden;
@@ -337,12 +325,17 @@
         border-radius: 99px;
         width: 0%;
         background: linear-gradient(90deg, var(--accent), var(--accent2));
-        transition: width 0.2s;
+        transition: width 0.15s;
       }
-
-      /* ── Log / activity ── */
+      .progress-stats {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.73rem;
+        color: var(--muted);
+        margin-top: 5px;
+      }
       #log {
-        max-height: 200px;
+        max-height: 180px;
         overflow-y: auto;
       }
       .log-entry {
@@ -370,8 +363,6 @@
         opacity: 0.5;
         flex-shrink: 0;
       }
-
-      /* ── Incoming toast ── */
       #toast-container {
         position: fixed;
         bottom: 24px;
@@ -386,6 +377,7 @@
         min-width: 280px;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         animation: slideIn 0.3s ease;
+        margin-top: 10px;
       }
       @keyframes slideIn {
         from {
@@ -405,18 +397,12 @@
       .toast-sub {
         font-size: 0.78rem;
         color: var(--muted);
-        margin-bottom: 12px;
       }
-      .toast-actions {
+      #join-section {
         display: flex;
-        gap: 8px;
+        flex-direction: column;
+        gap: 10px;
       }
-
-      /* ── Incoming progress ── */
-      #recv-progress-area {
-        display: none;
-      }
-
       @media (max-width: 640px) {
         main {
           grid-template-columns: 1fr;
@@ -433,7 +419,7 @@
       <div>
         <h1>LAN Drop</h1>
         <div class="subtitle">
-          Peer-to-Peer file transfer on your local network
+          Peer-to-Peer file transfer · Large file ready
         </div>
       </div>
       <div class="status-dot">
@@ -443,9 +429,7 @@
     </header>
 
     <main>
-      <!-- ── Left sidebar ── -->
       <aside>
-        <!-- Join form -->
         <div class="panel" id="join-panel">
           <div class="panel-title">🔐 Join a Room</div>
           <div id="join-section">
@@ -474,12 +458,7 @@
           </div>
         </div>
 
-        <!-- Peers list (shown after join) -->
-        <div
-          class="panel"
-          id="peers-panel"
-          style="display: none; margin-top: 16px"
-        >
+        <div class="panel" id="peers-panel">
           <div
             style="
               display: flex;
@@ -492,7 +471,7 @@
             <button class="btn btn-sm" onclick="leaveRoom()">Leave</button>
           </div>
           <div id="peers-list">
-            <div class="empty-peers">Waiting for others to join…</div>
+            <div class="empty-peers">Waiting for others…</div>
           </div>
           <div
             style="
@@ -508,9 +487,8 @@
         </div>
       </aside>
 
-      <!-- ── Right panel ── -->
       <div class="right">
-        <!-- Drop zone -->
+        <!-- File picker -->
         <div class="panel">
           <div class="panel-title">📤 Send a File</div>
           <div id="drop-zone">
@@ -521,7 +499,9 @@
             />
             <div class="drop-icon">📂</div>
             <div class="drop-title">Drop file here or click to browse</div>
-            <div class="drop-sub">Any file type · No size limit</div>
+            <div class="drop-sub">
+              Any file type · No size limit · Large files supported
+            </div>
             <div class="file-preview" id="file-preview">
               <div class="file-icon" id="file-icon">📄</div>
               <div class="file-info">
@@ -539,50 +519,73 @@
             "
             id="send-hint"
           >
-            Select a peer on the left, then send.
+            Join a room and select a peer to send.
           </div>
           <button id="send-btn" onclick="sendFile()">
             ⚡ Send to Selected Peer
           </button>
+          <button id="cancel-btn" onclick="cancelTransfer()">
+            ✖ Cancel Transfer
+          </button>
         </div>
 
         <!-- Send progress -->
-        <div class="panel" id="progress-area">
-          <div class="panel-title">📊 Transfer Progress</div>
-          <div class="progress-label">
-            <span id="prog-filename">—</span>
-            <span id="prog-pct">0%</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="prog-bar"></div>
-          </div>
-          <div
-            style="font-size: 0.75rem; color: var(--muted); margin-top: 6px"
-            id="prog-speed"
-          >
-            —
+        <div class="panel" id="progress-area" style="display: none">
+          <div class="panel-title">📤 Sending</div>
+          <div class="progress-wrap">
+            <div class="progress-label">
+              <span
+                id="prog-filename"
+                style="
+                  max-width: 70%;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  white-space: nowrap;
+                "
+                >—</span
+              >
+              <span id="prog-pct">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="prog-bar"></div>
+            </div>
+            <div class="progress-stats">
+              <span id="prog-sent">0 B / 0 B</span>
+              <span id="prog-speed">— MB/s</span>
+              <span id="prog-eta">ETA: —</span>
+            </div>
           </div>
         </div>
 
         <!-- Receive progress -->
-        <div class="panel" id="recv-progress-area">
-          <div class="panel-title">📥 Receiving File</div>
-          <div class="progress-label">
-            <span id="recv-filename">—</span>
-            <span id="recv-pct">0%</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="recv-bar"></div>
-          </div>
-          <div
-            style="font-size: 0.75rem; color: var(--muted); margin-top: 6px"
-            id="recv-speed"
-          >
-            —
+        <div class="panel" id="recv-area" style="display: none">
+          <div class="panel-title">📥 Receiving</div>
+          <div class="progress-wrap">
+            <div class="progress-label">
+              <span
+                id="recv-filename"
+                style="
+                  max-width: 70%;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  white-space: nowrap;
+                "
+                >—</span
+              >
+              <span id="recv-pct">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="recv-bar"></div>
+            </div>
+            <div class="progress-stats">
+              <span id="recv-got">0 B / 0 B</span>
+              <span id="recv-speed">— MB/s</span>
+              <span id="recv-eta">ETA: —</span>
+            </div>
           </div>
         </div>
 
-        <!-- Activity log -->
+        <!-- Log -->
         <div class="panel">
           <div class="panel-title">🗒️ Activity Log</div>
           <div id="log"></div>
@@ -590,67 +593,75 @@
       </div>
     </main>
 
-    <!-- Incoming file toast -->
     <div id="toast-container"></div>
 
     <script>
-      // ═══════════════════════════════════════════════════════
-      //  State
-      // ═══════════════════════════════════════════════════════
-      let ws = null;
-      let myId = null,
-        myRoom = null,
-        myName = null;
-      let peers = {}; // { peerId: { name, conn, channel } }
+      // ═══════════════════════════════════════════════
+      // Constants — tuned for large file transfers
+      // ═══════════════════════════════════════════════
+      const CHUNK_SIZE = 256 * 1024; // 256 KB per chunk
+      const MAX_BUFFER = 4 * 1024 * 1024; // pause sending when buffer > 4 MB
+      const BUFFER_LOW = 512 * 1024; // resume sending when buffer drains to 512 KB
+      const ICE_CFG = {
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      };
+
+      // ═══════════════════════════════════════════════
+      // State
+      // ═══════════════════════════════════════════════
+      let ws, myId, myRoom, myName;
+      let peers = {}; // peerId → { name, conn, channel }
       let selectedPeer = null;
       let selectedFile = null;
+      let sending = false;
+      let cancelFlag = false;
+      const recvState = {}; // peerId → receive buffer state
 
-      const CHUNK = 65536; // 64 KB chunks
-
-      // ═══════════════════════════════════════════════════════
-      //  Utility
-      // ═══════════════════════════════════════════════════════
+      // ═══════════════════════════════════════════════
+      // Utility
+      // ═══════════════════════════════════════════════
       const $ = (id) => document.getElementById(id);
-      function fmtSize(b) {
+      const fmtSize = (b) => {
         if (b < 1024) return b + " B";
-        if (b < 1048576) return (b / 1024).toFixed(1) + " KB";
-        if (b < 1073741824) return (b / 1048576).toFixed(1) + " MB";
-        return (b / 1073741824).toFixed(2) + " GB";
-      }
-      function fileIcon(name) {
+        if (b < 1 << 20) return (b >> 10) + " KB";
+        if (b < 1 << 30) return (b / (1 << 20)).toFixed(1) + " MB";
+        return (b / (1 << 30)).toFixed(2) + " GB";
+      };
+      const fmtETA = (secs) => {
+        if (!isFinite(secs) || secs < 0) return "—";
+        if (secs < 60) return Math.ceil(secs) + "s";
+        return Math.ceil(secs / 60) + "m " + (Math.ceil(secs) % 60) + "s";
+      };
+      const fileIcon = (name) => {
         const e = name.split(".").pop().toLowerCase();
-        const m = {
-          pdf: "📕",
-          doc: "📝",
-          docx: "📝",
-          xls: "📊",
-          xlsx: "📊",
-          ppt: "📋",
-          pptx: "📋",
-          zip: "🗜️",
-          rar: "🗜️",
-          "7z": "🗜️",
-          mp4: "🎬",
-          mov: "🎬",
-          avi: "🎬",
-          mp3: "🎵",
-          wav: "🎵",
-          jpg: "🖼️",
-          jpeg: "🖼️",
-          png: "🖼️",
-          gif: "🖼️",
-          svg: "🎨",
-          py: "🐍",
-          js: "📜",
-          ts: "📜",
-          html: "🌐",
-          css: "🎨",
-          json: "📋",
-          txt: "📄",
-          md: "📄",
-        };
-        return m[e] || "📦";
-      }
+        return (
+          {
+            pdf: "📕",
+            doc: "📝",
+            docx: "📝",
+            xls: "📊",
+            xlsx: "📊",
+            zip: "🗜️",
+            rar: "🗜️",
+            "7z": "🗜️",
+            mp4: "🎬",
+            mov: "🎬",
+            avi: "🎬",
+            mp3: "🎵",
+            wav: "🎵",
+            jpg: "🖼️",
+            jpeg: "🖼️",
+            png: "🖼️",
+            gif: "🖼️",
+            svg: "🎨",
+            py: "🐍",
+            js: "📜",
+            html: "🌐",
+            txt: "📄",
+            md: "📄",
+          }[e] || "📦"
+        );
+      };
       function log(msg, type = "info") {
         const el = document.createElement("div");
         el.className = `log-entry ${type}`;
@@ -662,14 +673,14 @@
         el.innerHTML = `<span class="log-time">${t}</span><span>${msg}</span>`;
         $("log").prepend(el);
       }
-      function setConnStatus(connected, label) {
-        $("conn-dot").classList.toggle("connected", connected);
+      function setConn(ok, label) {
+        $("conn-dot").classList.toggle("connected", ok);
         $("conn-label").textContent = label;
       }
 
-      // ═══════════════════════════════════════════════════════
-      //  Join / Leave
-      // ═══════════════════════════════════════════════════════
+      // ═══════════════════════════════════════════════
+      // Join / Leave
+      // ═══════════════════════════════════════════════
       function joinRoom() {
         const name = $("inp-name").value.trim() || "Anonymous";
         const room = $("inp-room").value.trim() || "default";
@@ -677,31 +688,35 @@
 
         const proto = location.protocol === "https:" ? "wss" : "ws";
         ws = new WebSocket(`${proto}://${location.host}`);
-
-        ws.onopen = () => {
-          ws.send(JSON.stringify({ type: "join", name, room }));
-        };
+        ws.onopen = () => ws.send(JSON.stringify({ type: "join", name, room }));
         ws.onmessage = (e) => handleSignal(JSON.parse(e.data));
         ws.onclose = () => {
-          setConnStatus(false, "Disconnected");
-          log("Disconnected from server", "error");
+          setConn(false, "Disconnected");
+          log("Server disconnected", "error");
         };
+        ws.onerror = () =>
+          log("WebSocket error — is server.js running?", "error");
       }
 
       function leaveRoom() {
         if (ws) ws.close();
+        Object.values(peers).forEach((p) => p.conn?.close());
         peers = {};
         selectedPeer = null;
         $("join-panel").style.display = "";
         $("peers-panel").style.display = "none";
         $("send-btn").style.display = "none";
         renderPeers();
-        setConnStatus(false, "Disconnected");
+        setConn(false, "Disconnected");
       }
 
-      // ═══════════════════════════════════════════════════════
-      //  Signaling handler
-      // ═══════════════════════════════════════════════════════
+      // ═══════════════════════════════════════════════
+      // Signaling
+      // ═══════════════════════════════════════════════
+      function sig(msg) {
+        ws.send(JSON.stringify(msg));
+      }
+
       function handleSignal(msg) {
         switch (msg.type) {
           case "joined":
@@ -711,97 +726,78 @@
             $("me-label").textContent = myName;
             $("join-panel").style.display = "none";
             $("peers-panel").style.display = "";
-            setConnStatus(true, `Room: ${msg.room}`);
-            log(`Joined room "${msg.room}" as ${myName}`, "success");
+            setConn(true, `Room: ${msg.room}`);
+            log(`Joined "${msg.room}" as ${myName}`, "success");
             msg.peers.forEach((p) => {
               peers[p.id] = { name: p.name };
+              createConn(p.id, true);
             });
             renderPeers();
-            // Initiate WebRTC to each existing peer
-            msg.peers.forEach((p) => createConnection(p.id, true));
             break;
-
           case "peer-joined":
             peers[msg.peer.id] = { name: msg.peer.name };
-            log(`${msg.peer.name} joined the room`, "success");
+            log(`${msg.peer.name} joined`, "success");
             renderPeers();
             break;
-
           case "peer-left":
             if (peers[msg.id]) {
               log(`${peers[msg.id].name} left`, "info");
-              if (peers[msg.id].conn) peers[msg.id].conn.close();
+              peers[msg.id].conn?.close();
               delete peers[msg.id];
-              if (selectedPeer === msg.id) selectedPeer = null;
+              if (selectedPeer === msg.id) {
+                selectedPeer = null;
+                updateSendBtn();
+              }
               renderPeers();
             }
             break;
-
           case "offer":
             handleOffer(msg.from, msg.sdp);
             break;
-
           case "answer":
-            if (peers[msg.from]?.conn)
-              peers[msg.from].conn.setRemoteDescription({
-                type: "answer",
-                sdp: msg.sdp,
-              });
+            peers[msg.from]?.conn?.setRemoteDescription({
+              type: "answer",
+              sdp: msg.sdp,
+            });
             break;
-
           case "ice-candidate":
-            if (peers[msg.from]?.conn && msg.candidate)
-              peers[msg.from].conn
-                .addIceCandidate(msg.candidate)
-                .catch(() => {});
-            break;
-
-          case "file-incoming":
-            // Handled via DataChannel, not used here
+            peers[msg.from]?.conn
+              ?.addIceCandidate(msg.candidate)
+              .catch(() => {});
             break;
         }
       }
 
-      // ═══════════════════════════════════════════════════════
-      //  WebRTC
-      // ═══════════════════════════════════════════════════════
-      const ICE = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
-
-      function createConnection(peerId, initiator) {
-        const conn = new RTCPeerConnection(ICE);
+      // ═══════════════════════════════════════════════
+      // WebRTC connections
+      // ═══════════════════════════════════════════════
+      function createConn(peerId, initiator) {
+        const conn = new RTCPeerConnection(ICE_CFG);
         peers[peerId] = peers[peerId] || {};
         peers[peerId].conn = conn;
 
         conn.onicecandidate = (e) => {
           if (e.candidate)
-            ws.send(
-              JSON.stringify({
-                type: "ice-candidate",
-                to: peerId,
-                candidate: e.candidate,
-              }),
-            );
+            sig({ type: "ice-candidate", to: peerId, candidate: e.candidate });
         };
-
         conn.onconnectionstatechange = () => {
           const s = conn.connectionState;
-          if (s === "connected")
-            log(`P2P connected with ${peers[peerId]?.name}`, "success");
-          if (s === "failed" || s === "disconnected")
-            log(`P2P lost with ${peers[peerId]?.name}`, "error");
+          log(
+            `[${peers[peerId]?.name}] P2P: ${s}`,
+            s === "connected" ? "success" : s === "failed" ? "error" : "info",
+          );
           renderPeers();
+          updateSendBtn();
         };
 
         if (initiator) {
-          const ch = conn.createDataChannel("filetransfer", { ordered: true });
+          // Use ordered, reliable channel — critical for large binary files
+          const ch = conn.createDataChannel("file", { ordered: true });
           peers[peerId].channel = ch;
           setupChannel(ch, peerId);
-
-          conn.createOffer().then((offer) => {
-            conn.setLocalDescription(offer);
-            ws.send(
-              JSON.stringify({ type: "offer", to: peerId, sdp: offer.sdp }),
-            );
+          conn.createOffer().then((o) => {
+            conn.setLocalDescription(o);
+            sig({ type: "offer", to: peerId, sdp: o.sdp });
           });
         } else {
           conn.ondatachannel = (e) => {
@@ -809,82 +805,93 @@
             setupChannel(e.channel, peerId);
           };
         }
-        return conn;
       }
 
       async function handleOffer(fromId, sdp) {
-        peers[fromId] = peers[fromId] || {
-          name: peers[fromId]?.name || "Unknown",
-        };
-        const conn = createConnection(fromId, false);
-        await conn.setRemoteDescription({ type: "offer", sdp });
-        const answer = await conn.createAnswer();
-        await conn.setLocalDescription(answer);
-        ws.send(
-          JSON.stringify({ type: "answer", to: fromId, sdp: answer.sdp }),
-        );
+        peers[fromId] = peers[fromId] || { name: peers[fromId]?.name || "?" };
+        createConn(fromId, false);
+        await peers[fromId].conn.setRemoteDescription({ type: "offer", sdp });
+        const ans = await peers[fromId].conn.createAnswer();
+        await peers[fromId].conn.setLocalDescription(ans);
+        sig({ type: "answer", to: fromId, sdp: ans.sdp });
       }
 
-      // ═══════════════════════════════════════════════════════
-      //  DataChannel — Send & Receive
-      // ═══════════════════════════════════════════════════════
-      // Receiving state per peer
-      const recvState = {};
-
+      // ═══════════════════════════════════════════════
+      // DataChannel setup — receive side
+      // ═══════════════════════════════════════════════
       function setupChannel(ch, peerId) {
         ch.binaryType = "arraybuffer";
 
+        // KEY FIX: set bufferedAmountLowThreshold so we can use the event
+        ch.bufferedAmountLowThreshold = BUFFER_LOW;
+
         ch.onopen = () => {
-          log(`Data channel open with ${peers[peerId]?.name}`, "success");
+          log(`Channel open ↔ ${peers[peerId]?.name}`, "success");
           renderPeers();
+          updateSendBtn();
         };
-        ch.onclose = () =>
-          log(`Data channel closed with ${peers[peerId]?.name}`, "info");
+        ch.onclose = () => {
+          log(`Channel closed ↔ ${peers[peerId]?.name}`, "info");
+          renderPeers();
+          updateSendBtn();
+        };
+        ch.onerror = (e) =>
+          log(`Channel error ↔ ${peers[peerId]?.name}: ${e.message}`, "error");
 
         ch.onmessage = (e) => {
-          const data = e.data;
-
-          // Text = control message (JSON)
-          if (typeof data === "string") {
-            const ctrl = JSON.parse(data);
-            if (ctrl.type === "file-meta") {
+          if (typeof e.data === "string") {
+            const ctrl = JSON.parse(e.data);
+            if (ctrl.type === "meta") {
               recvState[peerId] = {
                 name: ctrl.name,
                 size: ctrl.size,
-                mime: ctrl.mime,
-                received: 0,
+                mime: ctrl.mime || "application/octet-stream",
                 chunks: [],
+                received: 0,
                 startTime: Date.now(),
               };
-              showIncomingToast(peerId, ctrl);
+              showToast(
+                `📥 Incoming: ${ctrl.name}`,
+                `${fmtSize(ctrl.size)} from ${peers[peerId]?.name}`,
+              );
               log(
-                `Incoming: ${ctrl.name} (${fmtSize(ctrl.size)}) from ${peers[peerId]?.name}`,
+                `Incoming "${ctrl.name}" (${fmtSize(ctrl.size)}) from ${peers[peerId]?.name}`,
                 "send",
               );
-              $("recv-filename").textContent = ctrl.name;
-              $("recv-pct").textContent = "0%";
-              $("recv-bar").style.width = "0%";
-              $("recv-progress-area").style.display = "";
-              $("recv-speed").textContent = "Starting…";
-            } else if (ctrl.type === "file-done") {
+              updateRecvUI(peerId);
+            } else if (ctrl.type === "done") {
               finalizeReceive(peerId);
+            } else if (ctrl.type === "cancel") {
+              delete recvState[peerId];
+              $("recv-area").style.display = "none";
+              log(`Transfer cancelled by ${peers[peerId]?.name}`, "error");
             }
             return;
           }
-
-          // Binary = file chunk
+          // Binary chunk
           const st = recvState[peerId];
           if (!st) return;
-          st.chunks.push(data);
-          st.received += data.byteLength;
-
-          const pct = Math.round((st.received / st.size) * 100);
-          const elapsed = (Date.now() - st.startTime) / 1000 || 0.001;
-          const speed = fmtSize(st.received / elapsed) + "/s";
-          $("recv-pct").textContent = pct + "%";
-          $("recv-bar").style.width = pct + "%";
-          $("recv-speed").textContent = speed;
+          st.chunks.push(e.data);
+          st.received += e.data.byteLength;
+          updateRecvUI(peerId);
         };
+      }
+
+      function updateRecvUI(peerId) {
+        const st = recvState[peerId];
+        if (!st) return;
+        const pct = st.size ? Math.round((st.received / st.size) * 100) : 0;
+        const secs = (Date.now() - st.startTime) / 1000 || 0.001;
+        const spd = st.received / secs;
+        const eta = spd > 0 ? (st.size - st.received) / spd : Infinity;
+        $("recv-filename").textContent = st.name;
+        $("recv-pct").textContent = pct + "%";
+        $("recv-bar").style.width = pct + "%";
+        $("recv-got").textContent =
+          fmtSize(st.received) + " / " + fmtSize(st.size);
+        $("recv-speed").textContent = fmtSize(spd) + "/s";
+        $("recv-eta").textContent = "ETA: " + fmtETA(eta);
+        $("recv-area").style.display = "";
       }
 
       function finalizeReceive(peerId) {
@@ -896,85 +903,116 @@
         a.href = url;
         a.download = st.name;
         a.click();
-        URL.revokeObjectURL(url);
-        log(`✅ Received & saved: ${st.name}`, "success");
-        $("recv-progress-area").style.display = "none";
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        log(`✅ Saved: ${st.name} (${fmtSize(st.size)})`, "success");
+        $("recv-area").style.display = "none";
         delete recvState[peerId];
       }
 
-      // ── Sending ──
+      // ═══════════════════════════════════════════════
+      // Send — with proper backpressure via bufferedamountlow
+      // ═══════════════════════════════════════════════
       async function sendFile() {
-        if (!selectedFile || !selectedPeer) return;
+        if (!selectedFile || !selectedPeer || sending) return;
         const ch = peers[selectedPeer]?.channel;
         if (!ch || ch.readyState !== "open") {
-          log("Data channel not ready. Wait a moment and retry.", "error");
+          log("Channel not ready, wait a moment", "error");
           return;
         }
 
-        $("send-btn").disabled = true;
+        sending = true;
+        cancelFlag = false;
+        $("send-btn").style.display = "none";
+        $("cancel-btn").style.display = "";
+        $("progress-area").style.display = "";
+
         const file = selectedFile;
         const total = file.size;
+        let offset = 0;
+        const startTime = Date.now();
 
-        // Send metadata
         ch.send(
           JSON.stringify({
-            type: "file-meta",
+            type: "meta",
             name: file.name,
             size: total,
             mime: file.type || "application/octet-stream",
           }),
         );
-
         $("prog-filename").textContent = file.name;
-        $("prog-pct").textContent = "0%";
-        $("prog-bar").style.width = "0%";
-        $("progress-area").style.display = "";
-
         log(
-          `Sending ${file.name} (${fmtSize(total)}) to ${peers[selectedPeer].name}…`,
+          `Sending "${file.name}" (${fmtSize(total)}) to ${peers[selectedPeer].name}…`,
           "send",
         );
 
-        let offset = 0;
-        const startTime = Date.now();
+        // Read file into ArrayBuffer once — avoids repeated FileReader calls
+        const buffer = await file.arrayBuffer();
 
-        function sendChunk() {
-          if (offset >= total) {
-            ch.send(JSON.stringify({ type: "file-done" }));
-            log(`✅ Sent: ${file.name}`, "success");
-            $("send-btn").disabled = false;
-            return;
-          }
-          // Back-pressure: wait if buffer too full
-          if (ch.bufferedAmount > CHUNK * 8) {
-            setTimeout(sendChunk, 20);
-            return;
-          }
-          const slice = file.slice(offset, offset + CHUNK);
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            ch.send(ev.target.result);
-            offset += ev.target.result.byteLength;
-            const pct = Math.round((offset / total) * 100);
-            const elapsed = (Date.now() - startTime) / 1000 || 0.001;
-            const speed = fmtSize(offset / elapsed) + "/s";
-            $("prog-pct").textContent = pct + "%";
-            $("prog-bar").style.width = pct + "%";
-            $("prog-speed").textContent = speed;
-            sendChunk();
-          };
-          reader.readAsArrayBuffer(slice);
+        function updateSendUI() {
+          const pct = total ? Math.round((offset / total) * 100) : 100;
+          const secs = (Date.now() - startTime) / 1000 || 0.001;
+          const spd = offset / secs;
+          const eta = spd > 0 ? (total - offset) / spd : Infinity;
+          $("prog-pct").textContent = pct + "%";
+          $("prog-bar").style.width = pct + "%";
+          $("prog-sent").textContent = fmtSize(offset) + " / " + fmtSize(total);
+          $("prog-speed").textContent = fmtSize(spd) + "/s";
+          $("prog-eta").textContent = "ETA: " + fmtETA(eta);
         }
-        sendChunk();
+
+        // Pump loop — uses bufferedAmountLow event for backpressure
+        function pump() {
+          if (cancelFlag) {
+            ch.send(JSON.stringify({ type: "cancel" }));
+            finishSend(false);
+            return;
+          }
+          while (offset < total) {
+            // Pause if buffer is filling up — prevents browser crash on large files
+            if (ch.bufferedAmount > MAX_BUFFER) {
+              ch.onbufferedamountlow = () => {
+                ch.onbufferedamountlow = null;
+                pump();
+              };
+              return; // yield; will resume via event
+            }
+            const end = Math.min(offset + CHUNK_SIZE, total);
+            const slice = buffer.slice(offset, end);
+            ch.send(slice);
+            offset += slice.byteLength;
+            updateSendUI();
+          }
+          // All chunks sent
+          ch.send(JSON.stringify({ type: "done" }));
+          log(`✅ Sent: ${file.name} (${fmtSize(total)})`, "success");
+          finishSend(true);
+        }
+
+        pump();
       }
 
-      // ═══════════════════════════════════════════════════════
-      //  UI helpers
-      // ═══════════════════════════════════════════════════════
+      function finishSend(success) {
+        sending = false;
+        cancelFlag = false;
+        $("cancel-btn").style.display = "none";
+        $("send-btn").style.display = "";
+        if (!success) {
+          $("progress-area").style.display = "none";
+          log("Transfer cancelled", "error");
+        }
+      }
+
+      function cancelTransfer() {
+        if (sending) cancelFlag = true;
+      }
+
+      // ═══════════════════════════════════════════════
+      // UI helpers
+      // ═══════════════════════════════════════════════
       function renderPeers() {
         const list = $("peers-list");
         const ids = Object.keys(peers);
-        if (ids.length === 0) {
+        if (!ids.length) {
           list.innerHTML =
             '<div class="empty-peers">Waiting for others to join…</div>';
           return;
@@ -982,16 +1020,15 @@
         list.innerHTML = "";
         ids.forEach((id) => {
           const p = peers[id];
-          const state = p.conn?.connectionState || "—";
-          const chReady = p.channel?.readyState === "open";
+          const ready = p.channel?.readyState === "open";
           const card = document.createElement("div");
           card.className =
             "peer-card" + (selectedPeer === id ? " selected" : "");
           card.innerHTML = `
-      <div class="peer-avatar">${p.name[0].toUpperCase()}</div>
+      <div class="peer-avatar">${(p.name || "?")[0].toUpperCase()}</div>
       <div>
         <div class="peer-name">${p.name}</div>
-        <div class="peer-id">${chReady ? "🟢 Ready" : "🟡 Connecting…"}</div>
+        <div class="peer-status">${ready ? "🟢 Ready to transfer" : "🟡 Connecting…"}</div>
       </div>`;
           card.onclick = () => {
             selectedPeer = id;
@@ -1006,8 +1043,9 @@
         const canSend =
           selectedFile &&
           selectedPeer &&
-          peers[selectedPeer]?.channel?.readyState === "open";
-        $("send-btn").style.display = selectedFile ? "block" : "none";
+          peers[selectedPeer]?.channel?.readyState === "open" &&
+          !sending;
+        $("send-btn").style.display = selectedFile ? "" : "none";
         $("send-btn").disabled = !canSend;
         $("send-hint").style.display = selectedFile ? "none" : "";
       }
@@ -1024,21 +1062,16 @@
         updateSendBtn();
       }
 
-      function showIncomingToast(peerId, meta) {
+      function showToast(title, sub) {
         const c = $("toast-container");
         const t = document.createElement("div");
         t.className = "toast";
-        t.innerHTML = `
-    <div class="toast-title">📥 Incoming File</div>
-    <div class="toast-sub">${meta.name} · ${fmtSize(meta.size)} from ${peers[peerId]?.name || "Unknown"}</div>
-    <div class="toast-actions">
-      <span style="font-size:.78rem;color:var(--muted)">Receiving automatically…</span>
-    </div>`;
+        t.innerHTML = `<div class="toast-title">${title}</div><div class="toast-sub">${sub}</div>`;
         c.appendChild(t);
-        setTimeout(() => t.remove(), 5000);
+        setTimeout(() => t.remove(), 6000);
       }
 
-      // ── Drag & drop ──
+      // Drag & drop
       const dz = $("drop-zone");
       dz.addEventListener("dragover", (e) => {
         e.preventDefault();
@@ -1051,7 +1084,7 @@
         if (e.dataTransfer.files[0]) onFileSelected(e.dataTransfer.files[0]);
       });
 
-      // ── Pre-fill name ──
+      // Random name
       const adj = [
         "Swift",
         "Bright",
@@ -1073,9 +1106,7 @@
         "Hawk",
       ];
       $("inp-name").value =
-        adj[Math.floor(Math.random() * 8)] +
-        " " +
-        nou[Math.floor(Math.random() * 8)];
+        adj[(Math.random() * 8) | 0] + " " + nou[(Math.random() * 8) | 0];
     </script>
   </body>
 </html>
