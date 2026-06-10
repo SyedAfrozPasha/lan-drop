@@ -1,0 +1,1081 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LAN Drop — P2P File Transfer</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #0f1117;
+        --surface: #1a1d27;
+        --card: #22263a;
+        --accent: #6c63ff;
+        --accent2: #00d2ff;
+        --text: #e8eaf6;
+        --muted: #7b7f9e;
+        --danger: #ff5370;
+        --success: #00e676;
+        --border: #2e3250;
+      }
+
+      body {
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ── Header ── */
+      header {
+        padding: 18px 32px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        border-bottom: 1px solid var(--border);
+        background: linear-gradient(135deg, #1a1d27 0%, #12162b 100%);
+      }
+      header .logo {
+        font-size: 1.6rem;
+      }
+      header h1 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+      header .subtitle {
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+      .status-dot {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+      .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--muted);
+        transition: background 0.3s;
+      }
+      .dot.connected {
+        background: var(--success);
+        box-shadow: 0 0 6px var(--success);
+      }
+
+      /* ── Main layout ── */
+      main {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 0;
+        max-width: 1100px;
+        margin: 0 auto;
+        width: 100%;
+        padding: 28px 20px;
+        align-items: start;
+      }
+
+      /* ── Panels ── */
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 20px;
+        height: fit-content;
+      }
+      .panel-title {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 16px;
+      }
+
+      /* ── Join form ── */
+      #join-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      label {
+        font-size: 0.83rem;
+        color: var(--muted);
+        margin-bottom: 2px;
+        display: block;
+      }
+      input[type="text"] {
+        width: 100%;
+        padding: 9px 13px;
+        border-radius: 8px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        color: var(--text);
+        font-size: 0.9rem;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      input[type="text"]:focus {
+        border-color: var(--accent);
+      }
+      .btn {
+        padding: 9px 18px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-size: 0.88rem;
+        font-weight: 600;
+        transition:
+          opacity 0.15s,
+          transform 0.1s;
+      }
+      .btn:active {
+        transform: scale(0.97);
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, var(--accent), #8b5cf6);
+        color: #fff;
+        width: 100%;
+      }
+      .btn-primary:hover {
+        opacity: 0.9;
+      }
+      .btn-sm {
+        padding: 5px 12px;
+        font-size: 0.78rem;
+        background: var(--card);
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+
+      /* ── Peers list ── */
+      #peers-section {
+        display: none;
+      }
+      .peer-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 9px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          background 0.2s;
+      }
+      .peer-card:hover {
+        border-color: var(--accent);
+        background: #2a2f4a;
+      }
+      .peer-card.selected {
+        border-color: var(--accent);
+        background: #2a2f4a;
+      }
+      .peer-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.95rem;
+        flex-shrink: 0;
+      }
+      .peer-name {
+        font-size: 0.88rem;
+        font-weight: 600;
+      }
+      .peer-id {
+        font-size: 0.7rem;
+        color: var(--muted);
+      }
+      .empty-peers {
+        text-align: center;
+        color: var(--muted);
+        font-size: 0.83rem;
+        padding: 20px 0;
+      }
+
+      /* ── Right panel ── */
+      .right {
+        margin-left: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      /* ── Drop zone ── */
+      #drop-zone {
+        border: 2px dashed var(--border);
+        border-radius: 14px;
+        padding: 40px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          background 0.2s;
+        position: relative;
+      }
+      #drop-zone.drag-over {
+        border-color: var(--accent);
+        background: #1e2040;
+      }
+      #drop-zone.has-file {
+        border-color: var(--accent2);
+        border-style: solid;
+      }
+      #drop-zone input[type="file"] {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+        width: 100%;
+      }
+      .drop-icon {
+        font-size: 2.8rem;
+        margin-bottom: 10px;
+      }
+      .drop-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      .drop-sub {
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .file-preview {
+        display: none;
+        align-items: center;
+        gap: 14px;
+        background: var(--card);
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-top: 12px;
+        text-align: left;
+      }
+      .file-preview.visible {
+        display: flex;
+      }
+      .file-icon {
+        font-size: 2rem;
+      }
+      .file-info .file-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        word-break: break-all;
+      }
+      .file-info .file-size {
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+
+      /* ── Send button ── */
+      #send-btn {
+        padding: 12px;
+        border-radius: 10px;
+        border: none;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: #fff;
+        transition:
+          opacity 0.2s,
+          transform 0.1s;
+        display: none;
+      }
+      #send-btn:hover {
+        opacity: 0.9;
+      }
+      #send-btn:active {
+        transform: scale(0.98);
+      }
+      #send-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* ── Progress ── */
+      #progress-area {
+        display: none;
+      }
+      .progress-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.82rem;
+        color: var(--muted);
+        margin-bottom: 7px;
+      }
+      .progress-bar-bg {
+        height: 8px;
+        border-radius: 99px;
+        background: var(--card);
+        overflow: hidden;
+      }
+      .progress-bar-fill {
+        height: 100%;
+        border-radius: 99px;
+        width: 0%;
+        background: linear-gradient(90deg, var(--accent), var(--accent2));
+        transition: width 0.2s;
+      }
+
+      /* ── Log / activity ── */
+      #log {
+        max-height: 200px;
+        overflow-y: auto;
+      }
+      .log-entry {
+        font-size: 0.78rem;
+        padding: 5px 8px;
+        border-radius: 6px;
+        margin-bottom: 4px;
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+      }
+      .log-entry.info {
+        color: var(--muted);
+      }
+      .log-entry.success {
+        color: var(--success);
+      }
+      .log-entry.error {
+        color: var(--danger);
+      }
+      .log-entry.send {
+        color: var(--accent2);
+      }
+      .log-time {
+        opacity: 0.5;
+        flex-shrink: 0;
+      }
+
+      /* ── Incoming toast ── */
+      #toast-container {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 999;
+      }
+      .toast {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 20px;
+        min-width: 280px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        animation: slideIn 0.3s ease;
+      }
+      @keyframes slideIn {
+        from {
+          transform: translateY(20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+      .toast-title {
+        font-weight: 700;
+        margin-bottom: 4px;
+        font-size: 0.92rem;
+      }
+      .toast-sub {
+        font-size: 0.78rem;
+        color: var(--muted);
+        margin-bottom: 12px;
+      }
+      .toast-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      /* ── Incoming progress ── */
+      #recv-progress-area {
+        display: none;
+      }
+
+      @media (max-width: 640px) {
+        main {
+          grid-template-columns: 1fr;
+        }
+        .right {
+          margin-left: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo">📡</div>
+      <div>
+        <h1>LAN Drop</h1>
+        <div class="subtitle">
+          Peer-to-Peer file transfer on your local network
+        </div>
+      </div>
+      <div class="status-dot">
+        <div class="dot" id="conn-dot"></div>
+        <span id="conn-label">Disconnected</span>
+      </div>
+    </header>
+
+    <main>
+      <!-- ── Left sidebar ── -->
+      <aside>
+        <!-- Join form -->
+        <div class="panel" id="join-panel">
+          <div class="panel-title">🔐 Join a Room</div>
+          <div id="join-section">
+            <div>
+              <label>Your Name</label>
+              <input
+                id="inp-name"
+                type="text"
+                placeholder="e.g. My Laptop"
+                maxlength="32"
+              />
+            </div>
+            <div>
+              <label>Room ID</label>
+              <input
+                id="inp-room"
+                type="text"
+                placeholder="e.g. myroom"
+                value="default"
+                maxlength="32"
+              />
+            </div>
+            <button class="btn btn-primary" onclick="joinRoom()">
+              Connect to Room
+            </button>
+          </div>
+        </div>
+
+        <!-- Peers list (shown after join) -->
+        <div
+          class="panel"
+          id="peers-panel"
+          style="display: none; margin-top: 16px"
+        >
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 16px;
+            "
+          >
+            <div class="panel-title" style="margin: 0">👥 Peers in Room</div>
+            <button class="btn btn-sm" onclick="leaveRoom()">Leave</button>
+          </div>
+          <div id="peers-list">
+            <div class="empty-peers">Waiting for others to join…</div>
+          </div>
+          <div
+            style="
+              margin-top: 10px;
+              font-size: 0.73rem;
+              color: var(--muted);
+              text-align: center;
+            "
+          >
+            Room: <strong id="room-label">—</strong> &nbsp;|&nbsp; You:
+            <strong id="me-label">—</strong>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ── Right panel ── -->
+      <div class="right">
+        <!-- Drop zone -->
+        <div class="panel">
+          <div class="panel-title">📤 Send a File</div>
+          <div id="drop-zone">
+            <input
+              type="file"
+              id="file-input"
+              onchange="onFileSelected(this.files[0])"
+            />
+            <div class="drop-icon">📂</div>
+            <div class="drop-title">Drop file here or click to browse</div>
+            <div class="drop-sub">Any file type · No size limit</div>
+            <div class="file-preview" id="file-preview">
+              <div class="file-icon" id="file-icon">📄</div>
+              <div class="file-info">
+                <div class="file-name" id="file-name">—</div>
+                <div class="file-size" id="file-size">—</div>
+              </div>
+            </div>
+          </div>
+          <div
+            style="
+              margin-top: 10px;
+              font-size: 0.78rem;
+              color: var(--muted);
+              text-align: center;
+            "
+            id="send-hint"
+          >
+            Select a peer on the left, then send.
+          </div>
+          <button id="send-btn" onclick="sendFile()">
+            ⚡ Send to Selected Peer
+          </button>
+        </div>
+
+        <!-- Send progress -->
+        <div class="panel" id="progress-area">
+          <div class="panel-title">📊 Transfer Progress</div>
+          <div class="progress-label">
+            <span id="prog-filename">—</span>
+            <span id="prog-pct">0%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="prog-bar"></div>
+          </div>
+          <div
+            style="font-size: 0.75rem; color: var(--muted); margin-top: 6px"
+            id="prog-speed"
+          >
+            —
+          </div>
+        </div>
+
+        <!-- Receive progress -->
+        <div class="panel" id="recv-progress-area">
+          <div class="panel-title">📥 Receiving File</div>
+          <div class="progress-label">
+            <span id="recv-filename">—</span>
+            <span id="recv-pct">0%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="recv-bar"></div>
+          </div>
+          <div
+            style="font-size: 0.75rem; color: var(--muted); margin-top: 6px"
+            id="recv-speed"
+          >
+            —
+          </div>
+        </div>
+
+        <!-- Activity log -->
+        <div class="panel">
+          <div class="panel-title">🗒️ Activity Log</div>
+          <div id="log"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Incoming file toast -->
+    <div id="toast-container"></div>
+
+    <script>
+      // ═══════════════════════════════════════════════════════
+      //  State
+      // ═══════════════════════════════════════════════════════
+      let ws = null;
+      let myId = null,
+        myRoom = null,
+        myName = null;
+      let peers = {}; // { peerId: { name, conn, channel } }
+      let selectedPeer = null;
+      let selectedFile = null;
+
+      const CHUNK = 65536; // 64 KB chunks
+
+      // ═══════════════════════════════════════════════════════
+      //  Utility
+      // ═══════════════════════════════════════════════════════
+      const $ = (id) => document.getElementById(id);
+      function fmtSize(b) {
+        if (b < 1024) return b + " B";
+        if (b < 1048576) return (b / 1024).toFixed(1) + " KB";
+        if (b < 1073741824) return (b / 1048576).toFixed(1) + " MB";
+        return (b / 1073741824).toFixed(2) + " GB";
+      }
+      function fileIcon(name) {
+        const e = name.split(".").pop().toLowerCase();
+        const m = {
+          pdf: "📕",
+          doc: "📝",
+          docx: "📝",
+          xls: "📊",
+          xlsx: "📊",
+          ppt: "📋",
+          pptx: "📋",
+          zip: "🗜️",
+          rar: "🗜️",
+          "7z": "🗜️",
+          mp4: "🎬",
+          mov: "🎬",
+          avi: "🎬",
+          mp3: "🎵",
+          wav: "🎵",
+          jpg: "🖼️",
+          jpeg: "🖼️",
+          png: "🖼️",
+          gif: "🖼️",
+          svg: "🎨",
+          py: "🐍",
+          js: "📜",
+          ts: "📜",
+          html: "🌐",
+          css: "🎨",
+          json: "📋",
+          txt: "📄",
+          md: "📄",
+        };
+        return m[e] || "📦";
+      }
+      function log(msg, type = "info") {
+        const el = document.createElement("div");
+        el.className = `log-entry ${type}`;
+        const t = new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+        el.innerHTML = `<span class="log-time">${t}</span><span>${msg}</span>`;
+        $("log").prepend(el);
+      }
+      function setConnStatus(connected, label) {
+        $("conn-dot").classList.toggle("connected", connected);
+        $("conn-label").textContent = label;
+      }
+
+      // ═══════════════════════════════════════════════════════
+      //  Join / Leave
+      // ═══════════════════════════════════════════════════════
+      function joinRoom() {
+        const name = $("inp-name").value.trim() || "Anonymous";
+        const room = $("inp-room").value.trim() || "default";
+        myName = name;
+
+        const proto = location.protocol === "https:" ? "wss" : "ws";
+        ws = new WebSocket(`${proto}://${location.host}`);
+
+        ws.onopen = () => {
+          ws.send(JSON.stringify({ type: "join", name, room }));
+        };
+        ws.onmessage = (e) => handleSignal(JSON.parse(e.data));
+        ws.onclose = () => {
+          setConnStatus(false, "Disconnected");
+          log("Disconnected from server", "error");
+        };
+      }
+
+      function leaveRoom() {
+        if (ws) ws.close();
+        peers = {};
+        selectedPeer = null;
+        $("join-panel").style.display = "";
+        $("peers-panel").style.display = "none";
+        $("send-btn").style.display = "none";
+        renderPeers();
+        setConnStatus(false, "Disconnected");
+      }
+
+      // ═══════════════════════════════════════════════════════
+      //  Signaling handler
+      // ═══════════════════════════════════════════════════════
+      function handleSignal(msg) {
+        switch (msg.type) {
+          case "joined":
+            myId = msg.id;
+            myRoom = msg.room;
+            $("room-label").textContent = msg.room;
+            $("me-label").textContent = myName;
+            $("join-panel").style.display = "none";
+            $("peers-panel").style.display = "";
+            setConnStatus(true, `Room: ${msg.room}`);
+            log(`Joined room "${msg.room}" as ${myName}`, "success");
+            msg.peers.forEach((p) => {
+              peers[p.id] = { name: p.name };
+            });
+            renderPeers();
+            // Initiate WebRTC to each existing peer
+            msg.peers.forEach((p) => createConnection(p.id, true));
+            break;
+
+          case "peer-joined":
+            peers[msg.peer.id] = { name: msg.peer.name };
+            log(`${msg.peer.name} joined the room`, "success");
+            renderPeers();
+            break;
+
+          case "peer-left":
+            if (peers[msg.id]) {
+              log(`${peers[msg.id].name} left`, "info");
+              if (peers[msg.id].conn) peers[msg.id].conn.close();
+              delete peers[msg.id];
+              if (selectedPeer === msg.id) selectedPeer = null;
+              renderPeers();
+            }
+            break;
+
+          case "offer":
+            handleOffer(msg.from, msg.sdp);
+            break;
+
+          case "answer":
+            if (peers[msg.from]?.conn)
+              peers[msg.from].conn.setRemoteDescription({
+                type: "answer",
+                sdp: msg.sdp,
+              });
+            break;
+
+          case "ice-candidate":
+            if (peers[msg.from]?.conn && msg.candidate)
+              peers[msg.from].conn
+                .addIceCandidate(msg.candidate)
+                .catch(() => {});
+            break;
+
+          case "file-incoming":
+            // Handled via DataChannel, not used here
+            break;
+        }
+      }
+
+      // ═══════════════════════════════════════════════════════
+      //  WebRTC
+      // ═══════════════════════════════════════════════════════
+      const ICE = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+
+      function createConnection(peerId, initiator) {
+        const conn = new RTCPeerConnection(ICE);
+        peers[peerId] = peers[peerId] || {};
+        peers[peerId].conn = conn;
+
+        conn.onicecandidate = (e) => {
+          if (e.candidate)
+            ws.send(
+              JSON.stringify({
+                type: "ice-candidate",
+                to: peerId,
+                candidate: e.candidate,
+              }),
+            );
+        };
+
+        conn.onconnectionstatechange = () => {
+          const s = conn.connectionState;
+          if (s === "connected")
+            log(`P2P connected with ${peers[peerId]?.name}`, "success");
+          if (s === "failed" || s === "disconnected")
+            log(`P2P lost with ${peers[peerId]?.name}`, "error");
+          renderPeers();
+        };
+
+        if (initiator) {
+          const ch = conn.createDataChannel("filetransfer", { ordered: true });
+          peers[peerId].channel = ch;
+          setupChannel(ch, peerId);
+
+          conn.createOffer().then((offer) => {
+            conn.setLocalDescription(offer);
+            ws.send(
+              JSON.stringify({ type: "offer", to: peerId, sdp: offer.sdp }),
+            );
+          });
+        } else {
+          conn.ondatachannel = (e) => {
+            peers[peerId].channel = e.channel;
+            setupChannel(e.channel, peerId);
+          };
+        }
+        return conn;
+      }
+
+      async function handleOffer(fromId, sdp) {
+        peers[fromId] = peers[fromId] || {
+          name: peers[fromId]?.name || "Unknown",
+        };
+        const conn = createConnection(fromId, false);
+        await conn.setRemoteDescription({ type: "offer", sdp });
+        const answer = await conn.createAnswer();
+        await conn.setLocalDescription(answer);
+        ws.send(
+          JSON.stringify({ type: "answer", to: fromId, sdp: answer.sdp }),
+        );
+      }
+
+      // ═══════════════════════════════════════════════════════
+      //  DataChannel — Send & Receive
+      // ═══════════════════════════════════════════════════════
+      // Receiving state per peer
+      const recvState = {};
+
+      function setupChannel(ch, peerId) {
+        ch.binaryType = "arraybuffer";
+
+        ch.onopen = () => {
+          log(`Data channel open with ${peers[peerId]?.name}`, "success");
+          renderPeers();
+        };
+        ch.onclose = () =>
+          log(`Data channel closed with ${peers[peerId]?.name}`, "info");
+
+        ch.onmessage = (e) => {
+          const data = e.data;
+
+          // Text = control message (JSON)
+          if (typeof data === "string") {
+            const ctrl = JSON.parse(data);
+            if (ctrl.type === "file-meta") {
+              recvState[peerId] = {
+                name: ctrl.name,
+                size: ctrl.size,
+                mime: ctrl.mime,
+                received: 0,
+                chunks: [],
+                startTime: Date.now(),
+              };
+              showIncomingToast(peerId, ctrl);
+              log(
+                `Incoming: ${ctrl.name} (${fmtSize(ctrl.size)}) from ${peers[peerId]?.name}`,
+                "send",
+              );
+              $("recv-filename").textContent = ctrl.name;
+              $("recv-pct").textContent = "0%";
+              $("recv-bar").style.width = "0%";
+              $("recv-progress-area").style.display = "";
+              $("recv-speed").textContent = "Starting…";
+            } else if (ctrl.type === "file-done") {
+              finalizeReceive(peerId);
+            }
+            return;
+          }
+
+          // Binary = file chunk
+          const st = recvState[peerId];
+          if (!st) return;
+          st.chunks.push(data);
+          st.received += data.byteLength;
+
+          const pct = Math.round((st.received / st.size) * 100);
+          const elapsed = (Date.now() - st.startTime) / 1000 || 0.001;
+          const speed = fmtSize(st.received / elapsed) + "/s";
+          $("recv-pct").textContent = pct + "%";
+          $("recv-bar").style.width = pct + "%";
+          $("recv-speed").textContent = speed;
+        };
+      }
+
+      function finalizeReceive(peerId) {
+        const st = recvState[peerId];
+        if (!st) return;
+        const blob = new Blob(st.chunks, { type: st.mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = st.name;
+        a.click();
+        URL.revokeObjectURL(url);
+        log(`✅ Received & saved: ${st.name}`, "success");
+        $("recv-progress-area").style.display = "none";
+        delete recvState[peerId];
+      }
+
+      // ── Sending ──
+      async function sendFile() {
+        if (!selectedFile || !selectedPeer) return;
+        const ch = peers[selectedPeer]?.channel;
+        if (!ch || ch.readyState !== "open") {
+          log("Data channel not ready. Wait a moment and retry.", "error");
+          return;
+        }
+
+        $("send-btn").disabled = true;
+        const file = selectedFile;
+        const total = file.size;
+
+        // Send metadata
+        ch.send(
+          JSON.stringify({
+            type: "file-meta",
+            name: file.name,
+            size: total,
+            mime: file.type || "application/octet-stream",
+          }),
+        );
+
+        $("prog-filename").textContent = file.name;
+        $("prog-pct").textContent = "0%";
+        $("prog-bar").style.width = "0%";
+        $("progress-area").style.display = "";
+
+        log(
+          `Sending ${file.name} (${fmtSize(total)}) to ${peers[selectedPeer].name}…`,
+          "send",
+        );
+
+        let offset = 0;
+        const startTime = Date.now();
+
+        function sendChunk() {
+          if (offset >= total) {
+            ch.send(JSON.stringify({ type: "file-done" }));
+            log(`✅ Sent: ${file.name}`, "success");
+            $("send-btn").disabled = false;
+            return;
+          }
+          // Back-pressure: wait if buffer too full
+          if (ch.bufferedAmount > CHUNK * 8) {
+            setTimeout(sendChunk, 20);
+            return;
+          }
+          const slice = file.slice(offset, offset + CHUNK);
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            ch.send(ev.target.result);
+            offset += ev.target.result.byteLength;
+            const pct = Math.round((offset / total) * 100);
+            const elapsed = (Date.now() - startTime) / 1000 || 0.001;
+            const speed = fmtSize(offset / elapsed) + "/s";
+            $("prog-pct").textContent = pct + "%";
+            $("prog-bar").style.width = pct + "%";
+            $("prog-speed").textContent = speed;
+            sendChunk();
+          };
+          reader.readAsArrayBuffer(slice);
+        }
+        sendChunk();
+      }
+
+      // ═══════════════════════════════════════════════════════
+      //  UI helpers
+      // ═══════════════════════════════════════════════════════
+      function renderPeers() {
+        const list = $("peers-list");
+        const ids = Object.keys(peers);
+        if (ids.length === 0) {
+          list.innerHTML =
+            '<div class="empty-peers">Waiting for others to join…</div>';
+          return;
+        }
+        list.innerHTML = "";
+        ids.forEach((id) => {
+          const p = peers[id];
+          const state = p.conn?.connectionState || "—";
+          const chReady = p.channel?.readyState === "open";
+          const card = document.createElement("div");
+          card.className =
+            "peer-card" + (selectedPeer === id ? " selected" : "");
+          card.innerHTML = `
+      <div class="peer-avatar">${p.name[0].toUpperCase()}</div>
+      <div>
+        <div class="peer-name">${p.name}</div>
+        <div class="peer-id">${chReady ? "🟢 Ready" : "🟡 Connecting…"}</div>
+      </div>`;
+          card.onclick = () => {
+            selectedPeer = id;
+            renderPeers();
+            updateSendBtn();
+          };
+          list.appendChild(card);
+        });
+      }
+
+      function updateSendBtn() {
+        const canSend =
+          selectedFile &&
+          selectedPeer &&
+          peers[selectedPeer]?.channel?.readyState === "open";
+        $("send-btn").style.display = selectedFile ? "block" : "none";
+        $("send-btn").disabled = !canSend;
+        $("send-hint").style.display = selectedFile ? "none" : "";
+      }
+
+      function onFileSelected(file) {
+        if (!file) return;
+        selectedFile = file;
+        $("file-icon").textContent = fileIcon(file.name);
+        $("file-name").textContent = file.name;
+        $("file-size").textContent = fmtSize(file.size);
+        $("file-preview").classList.add("visible");
+        $("drop-zone").classList.add("has-file");
+        log(`File selected: ${file.name} (${fmtSize(file.size)})`, "info");
+        updateSendBtn();
+      }
+
+      function showIncomingToast(peerId, meta) {
+        const c = $("toast-container");
+        const t = document.createElement("div");
+        t.className = "toast";
+        t.innerHTML = `
+    <div class="toast-title">📥 Incoming File</div>
+    <div class="toast-sub">${meta.name} · ${fmtSize(meta.size)} from ${peers[peerId]?.name || "Unknown"}</div>
+    <div class="toast-actions">
+      <span style="font-size:.78rem;color:var(--muted)">Receiving automatically…</span>
+    </div>`;
+        c.appendChild(t);
+        setTimeout(() => t.remove(), 5000);
+      }
+
+      // ── Drag & drop ──
+      const dz = $("drop-zone");
+      dz.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dz.classList.add("drag-over");
+      });
+      dz.addEventListener("dragleave", () => dz.classList.remove("drag-over"));
+      dz.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dz.classList.remove("drag-over");
+        if (e.dataTransfer.files[0]) onFileSelected(e.dataTransfer.files[0]);
+      });
+
+      // ── Pre-fill name ──
+      const adj = [
+        "Swift",
+        "Bright",
+        "Cool",
+        "Fast",
+        "Sharp",
+        "Bold",
+        "Calm",
+        "Keen",
+      ];
+      const nou = [
+        "Falcon",
+        "Panda",
+        "Eagle",
+        "Tiger",
+        "Otter",
+        "Wolf",
+        "Bear",
+        "Hawk",
+      ];
+      $("inp-name").value =
+        adj[Math.floor(Math.random() * 8)] +
+        " " +
+        nou[Math.floor(Math.random() * 8)];
+    </script>
+  </body>
+</html>
